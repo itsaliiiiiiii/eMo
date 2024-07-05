@@ -33,9 +33,7 @@ function Home() {
 
 
 
-    const HandleAddProduct = () => {
-        navigate("/addProduct");
-    };
+    
 
     const handleProductList = () => {
         navigate("/productList");
@@ -64,7 +62,7 @@ function Home() {
                             <li className="nav-item"></li>
                         </ul>
                     </div>
-                    {role === "seller" && <button className="btn mx-2 btn-primary" onClick={HandleAddProduct}>Add Product</button>}
+
                     {role === "seller" && <button className="btn btn-primary mx-2" type="button" onClick={handleProductList}>Product List</button>}
                     
                     <button className="btn btn-primary mx-2" type="button" onClick={handleLogout}>Logout</button>

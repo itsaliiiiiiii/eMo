@@ -11,14 +11,10 @@ function AddProduct() {
         stockProduct: '',
         descriptionProduct: '',
     });
+
     const [imageProduct, setImageProduct] = useState(null);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-
-    const handleLogout = () => {
-        localStorage.removeItem('eMoAccessToken');
-        navigate("/login");
-    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -58,7 +54,7 @@ function AddProduct() {
                 }
             };
             await axios.post(`http://localhost:3000/add-product`, formDataToSend, config);
-            navigate('/home');
+            navigate('/productList');
         } catch (error) {
             console.error('Error adding product:', error);
             if (error.response) {
@@ -89,7 +85,6 @@ function AddProduct() {
                                         type="text"
                                         className="form-control"
                                         name="nameProduct"
-                                        required
                                         placeholder='Name'
                                         value={formData.nameProduct}
                                         onChange={handleInputChange}
@@ -111,7 +106,6 @@ function AddProduct() {
                                         min={0}
                                         className="form-control"
                                         name="priceProduct"
-                                        required
                                         placeholder='Price'
                                         value={formData.priceProduct}
                                         onChange={handleInputChange}
@@ -123,7 +117,6 @@ function AddProduct() {
                                         min={0}
                                         className="form-control"
                                         name="stockProduct"
-                                        required
                                         placeholder='Stock'
                                         value={formData.stockProduct}
                                         onChange={handleInputChange}
@@ -134,7 +127,6 @@ function AddProduct() {
                                         className="form-control"
                                         type="file"
                                         name="imageProduct"
-                                        required
                                         accept="image/*"
                                         onChange={handleFileChange}
                                     />

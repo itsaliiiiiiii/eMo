@@ -4,7 +4,6 @@ import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import multer from 'multer';
-import path from 'path';
 
 const app = express();
 const PORT = 3000;
@@ -42,13 +41,16 @@ const productSchema = new mongoose.Schema({
     priceProduct: { type: Number, required: true },
     descriptionProduct: { type: String, required: false },
     stockProduct: { type: Number, required: true },
-    imageProduct: { type: String, required: true },
+    imageProduct: { type: Buffer, required: true }, // Store the image as binary data
     seller_id: { type: ObjectId, required: true, ref: 'User' },
     createdAt: { type: Date, default: Date.now },
 });
 
 const User = mongoose.model('User', userSchema, 'users');
 const Product = mongoose.model('Product', productSchema, 'products');
+
+const storage = multer.memoryStorage(); // Store files in memory
+const upload = multer({ storage: storage });
 
 app.post('/register', async (req, res) => {
     try {
@@ -112,6 +114,7 @@ app.get('/protected-endpoint', verifyToken, async (req, res) => {
         res.status(500).send('Error fetching user');
     }
 });
+
 app.post('/login', async (req, res) => {
     try {
         const user = await User.findOne({ mail: req.body.mail });
@@ -155,7 +158,6 @@ app.get('/check-email', async (req, res) => {
     }
 });
 
-
 app.get('/check-user', async (req, res) => {
     try {
         const { username } = req.query;
@@ -194,22 +196,11 @@ app.get('/check-SellerOrClient', verifyToken, async (req, res) => {
     }
 });
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/') // Make sure this directory exists
-    },
-    filename: function (req, file, cb) {
-        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
-    }
-});
-
-const upload = multer({ storage: storage });
-
 app.post('/add-product', verifyToken, upload.single('imageProduct'), async (req, res) => {
     try {
         const { nameProduct, originProduct, priceProduct, descriptionProduct, stockProduct } = req.body;
 
-        if (!nameProduct || !priceProduct || !stockProduct || !req.file) {
+        if (!nameProduct || !priceProduct || !stockProduct) {
             return res.status(400).send('All required fields must be provided');
         }
 
@@ -222,7 +213,7 @@ app.post('/add-product', verifyToken, upload.single('imageProduct'), async (req,
             descriptionProduct,
             stockProduct: Number(stockProduct),
             seller_id: new mongoose.Types.ObjectId(userId),
-            imageProduct: req.file.path // Save the path of the uploaded file
+            imageProduct: req.file.buffer
         });
 
         await product.save();
@@ -233,7 +224,27 @@ app.post('/add-product', verifyToken, upload.single('imageProduct'), async (req,
         res.status(500).send('Error registering product');
     }
 });
+app.get('/get-product', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
 
+        const products = await Product.find({ seller_id: userId });
+
+        if (products.length === 0) {
+            return res.status(404).send('No products found for this user');
+        }
+        
+        const productsWithBase64Image = products.map(product => ({
+            ...product.toObject(),
+            imageProduct: product.imageProduct.toString('base64')
+        }));
+
+        res.status(200).json(productsWithBase64Image);
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        res.status(500).send('Error fetching products');
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
