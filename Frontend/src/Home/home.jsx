@@ -31,10 +31,6 @@ function Home() {
         checkRole();
     }, []);
 
-
-
-    
-
     const handleProductList = () => {
         navigate("/productList");
     };

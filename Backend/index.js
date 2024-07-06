@@ -36,12 +36,12 @@ const userSchema = new mongoose.Schema({
 const { Types } = mongoose;
 const { ObjectId } = Types;
 const productSchema = new mongoose.Schema({
-    nameProduct: { type: String, required: true, unique: true },
+    nameProduct: { type: String, required: true },
     originProduct: { type: String, required: false },
     priceProduct: { type: Number, required: true },
     descriptionProduct: { type: String, required: false },
     stockProduct: { type: Number, required: true },
-    imageProduct: { type: Buffer, required: true }, // Store the image as binary data
+    imageProduct: { type: Buffer, required: true },
     seller_id: { type: ObjectId, required: true, ref: 'User' },
     createdAt: { type: Date, default: Date.now },
 });
@@ -49,7 +49,7 @@ const productSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema, 'users');
 const Product = mongoose.model('Product', productSchema, 'products');
 
-const storage = multer.memoryStorage(); // Store files in memory
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 app.post('/register', async (req, res) => {
@@ -233,7 +233,7 @@ app.get('/get-product', verifyToken, async (req, res) => {
         if (products.length === 0) {
             return res.status(404).send('No products found for this user');
         }
-        
+
         const productsWithBase64Image = products.map(product => ({
             ...product.toObject(),
             imageProduct: product.imageProduct.toString('base64')
@@ -245,6 +245,72 @@ app.get('/get-product', verifyToken, async (req, res) => {
         res.status(500).send('Error fetching products');
     }
 });
+
+app.get('/get-product/:id', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const productId = req.params.id;
+
+        const product = await Product.findOne({ _id: productId, seller_id: userId });
+        if (!product) {
+            return res.status(404).send('Product not found or does not belong to the user');
+        }
+        const productWithBase64Image = {
+            ...product.toObject(),
+            imageProduct: product.imageProduct.toString('base64')
+        };
+        res.status(200).json(productWithBase64Image);
+    } catch (error) {
+        console.error('Error fetching product:', error);
+        res.status(500).send('Error fetching product');
+    }
+});
+
+app.delete('/delete-product/:id', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const productId = req.params.id;
+
+        const product = await
+            Product.findOneAndDelete({ _id: productId, seller_id: userId });
+        if (!product) {
+            return res.status(404).send('Product not found or does not belong to the user');
+        }
+        res.status(200).send('Product deleted successfully');
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        res.status(500).send('Error deleting product');
+    }
+}
+);
+
+app.put('/update-product/:id', verifyToken, upload.single('imageProduct'), async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const productId = req.params.id;
+
+        const product = await
+            Product.findOne({ _id: productId, seller_id: userId });
+        if (!product) {
+            return res.status(404).send('Product not found or does not belong to the user');
+        }
+        const { nameProduct, originProduct, priceProduct, descriptionProduct, stockProduct } = req.body;
+        if (nameProduct) product.nameProduct = nameProduct;
+        if (originProduct) product.originProduct = originProduct;
+        if (priceProduct) product.priceProduct = priceProduct;
+        if (descriptionProduct) product.descriptionProduct = descriptionProduct;
+        if (stockProduct) product.stockProduct = stockProduct;
+        if (req.file) product.imageProduct = req.file.buffer;
+        await product.save();
+        console.log('Product updated:', product);
+        res.status(200).send('Product updated successfully');
+    } catch (error) {
+
+        console.error('Error updating product:', error);
+        res.status(500).send('Error updating product');
+    }
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

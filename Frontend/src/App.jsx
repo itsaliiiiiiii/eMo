@@ -5,13 +5,13 @@ import RegisterForm from './Register/register.jsx';
 import LoginForm from './Login/login.jsx';
 import Home from "./Home/home.jsx";
 import AuthRoute from './AuthRoute';
-import ProductList from './Home/Seller/ProductsList.jsx';
+import ProductList from './Home/Seller/productsList.jsx';
 import AddProduct from './Home/Seller/AddProduct.jsx';
+import EditProduct from './Home/Seller/editProduct.jsx';
 
 const App = () => {
     return (
         <Router>
-            <div>
                 <Routes>
                     <Route path="/register/*" element={<RegisterForm />} />
                     <Route path="/login" element={<LoginForm />} />
@@ -36,8 +36,14 @@ const App = () => {
                             </AuthRoute>
                         }
                     />
+                    <Route
+                        path="/editProduct/:id" element={
+                            <AuthRoute>
+                                <EditProduct />
+                            </AuthRoute>
+                        }
+                    />
                 </Routes>
-            </div>
         </Router>
     );
 };

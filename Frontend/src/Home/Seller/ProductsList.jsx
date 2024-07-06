@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // Make sure to install axios: npm install axios
+import axios from 'axios';
+import './productsList.scss';
 
 function ProductsList() {
     const navigate = useNavigate();
@@ -46,6 +47,35 @@ function ProductsList() {
 
     const handleAddProduct = () => {
         navigate("/addProduct");
+    };
+
+    const handleDeleteProduct = (productId) => {
+        return async () => {
+            try {
+                const token = localStorage.getItem('eMoAccessToken');
+                if (!token) {
+                    navigate('/login');
+                    return;
+                }
+
+                await axios.delete(`http://localhost:3000/delete-product/${productId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                fetchProducts();
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                setError('Failed to delete product. Please try again later.');
+            }
+        };
+    };
+
+    const handleEditProduct = (productId) => {
+        return () => {
+            navigate(`/editProduct/${productId}`);
+        };
     };
 
     return (
@@ -98,14 +128,17 @@ function ProductsList() {
                                         src={`data:image/jpeg;base64,${product.imageProduct}`}
                                         className="card-img-top"
                                         alt={product.nameProduct}
+                                        style={{ maxHeight: '200px', minHeight: '200px' }}
                                     />
                                     <div className="card-body">
                                         <h5 className="card-title">{product.nameProduct}</h5>
                                         <p className="card-text">{product.descriptionProduct}</p>
-                                        <p className="card-text">Price: ${product.priceProduct}</p>
+                                        <p className="card-text">Price: {product.priceProduct}</p>
                                         <p className="card-text">Stock: {product.stockProduct}</p>
                                         <p className="card-text">Origin: {product.originProduct}</p>
                                     </div>
+                                    <button className='button-edit-product' onClick={handleEditProduct(product._id)}>Edit</button>
+                                    <button className='button-delete-product' onClick={handleDeleteProduct(product._id)}>Delete</button>
                                 </div>
                             ))
                         ) : (
