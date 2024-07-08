@@ -294,6 +294,7 @@ app.put('/update-product/:id', verifyToken, upload.single('imageProduct'), async
         if (!product) {
             return res.status(404).send('Product not found or does not belong to the user');
         }
+
         const { nameProduct, originProduct, priceProduct, descriptionProduct, stockProduct } = req.body;
         if (nameProduct) product.nameProduct = nameProduct;
         if (originProduct) product.originProduct = originProduct;
@@ -301,15 +302,36 @@ app.put('/update-product/:id', verifyToken, upload.single('imageProduct'), async
         if (descriptionProduct) product.descriptionProduct = descriptionProduct;
         if (stockProduct) product.stockProduct = stockProduct;
         if (req.file) product.imageProduct = req.file.buffer;
+
         await product.save();
         console.log('Product updated:', product);
         res.status(200).send('Product updated successfully');
+
     } catch (error) {
 
         console.error('Error updating product:', error);
         res.status(500).send('Error updating product');
     }
 });
+
+app.get('/products-for-client', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userProducts = await Product.find({ seller_id: userId });
+        const userProductsIds = userProducts.map(product => product._id);
+        const products = await Product.find({ _id: { $nin: userProductsIds } });
+        const productsWithBase64Image = products.map(product => ({
+            ...product.toObject(),
+            imageProduct: product.imageProduct.toString('base64')
+        }));
+        res.status(200).json(productsWithBase64Image);
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        res.status(500).send('Error fetching products');
+    }
+
+});
+
 
 
 app.listen(PORT, () => {

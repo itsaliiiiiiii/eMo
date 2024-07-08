@@ -8,42 +8,41 @@ import AuthRoute from './AuthRoute';
 import ProductList from './Home/Seller/productsList.jsx';
 import AddProduct from './Home/Seller/AddProduct.jsx';
 import EditProduct from './Home/Seller/editProduct.jsx';
-
 const App = () => {
-    return (
+        return (
         <Router>
-                <Routes>
-                    <Route path="/register/*" element={<RegisterForm />} />
-                    <Route path="/login" element={<LoginForm />} />
-                    <Route
-                        path="/home" element={
-                            <AuthRoute>
-                                <Home />
-                            </AuthRoute>
-                        }
-                    />
-                    <Route
-                        path="/addProduct" element={
-                            <AuthRoute>
-                                <AddProduct />
-                            </AuthRoute>
-                        }
-                    />
-                    <Route
-                        path="/productList" element={
-                            <AuthRoute>
-                                <ProductList />
-                            </AuthRoute>
-                        }
-                    />
-                    <Route
-                        path="/editProduct/:id" element={
-                            <AuthRoute>
-                                <EditProduct />
-                            </AuthRoute>
-                        }
-                    />
-                </Routes>
+            <Routes>
+                <Route path="/register/*" element={<RegisterForm />} />
+                <Route path="/login" element={<LoginForm />} />
+                <Route
+                    path="/home" element={
+                        <AuthRoute>
+                            <Home />
+                        </AuthRoute>
+                    }
+                />
+                <Route
+                    path="/addProduct" element={
+                        <AuthRoute>
+                            <AddProduct />
+                        </AuthRoute>
+                    }
+                />
+                <Route
+                    path="/productList" element={
+                        <AuthRoute>
+                            <ProductList />
+                        </AuthRoute>
+                    }
+                />
+                <Route
+                    path="/editProduct/:id" element={
+                        <AuthRoute>
+                            <EditProduct />
+                        </AuthRoute>
+                    }
+                />
+            </Routes>
         </Router>
     );
 };

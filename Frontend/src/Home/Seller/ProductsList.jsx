@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './productsList.scss';
+import './products.scss';
 
 function ProductsList() {
     const navigate = useNavigate();

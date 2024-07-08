@@ -1,9 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import './Seller/products.scss';
+
+gsap.registerPlugin(ScrollTrigger);
 
 function Home() {
     const navigate = useNavigate();
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [role, setRole] = useState('');
+
+    const productItemsRef = useRef([]);
 
     useEffect(() => {
         const checkRole = async () => {
@@ -28,13 +38,68 @@ function Home() {
             }
         };
 
+        const fetchProductsForClient = async () => {
+            const token = localStorage.getItem('eMoAccessToken');
+            if (!token) {
+                navigate("/login");
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/products-for-client', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                const shuffledData = shuffleArray(data);
+                setProducts(shuffledData);
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                setError('Error fetching products');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const shuffleArray = (array) => {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        };
+
+        fetchProductsForClient();
         checkRole();
-    }, []);
+    }, [navigate]);
+
+    useEffect(() => {
+        if (products.length > 0) {
+            productItemsRef.current.forEach((item, index) => {
+                gsap.fromTo(item,
+                    { opacity: 0, y: 100 },
+                    {
+                        opacity: 1, y: 0, duration: 1,
+                        scrollTrigger: {
+                            trigger: item,
+                            start: 'top 90%',
+                            end: 'buttom 50% ',
+                            toggleActions: 'play none none none',
+                            markers: false,
+                            scrub: true
+                        }
+                    }
+                );
+            });
+        }
+    }, [products]);
 
     const handleProductList = () => {
         navigate("/productList");
     };
-    
+
     const handleLogout = () => {
         localStorage.removeItem('eMoAccessToken');
         navigate("/login");
@@ -60,10 +125,45 @@ function Home() {
                     </div>
 
                     {role === "seller" && <button className="btn btn-primary mx-2" type="button" onClick={handleProductList}>Product List</button>}
-                    
+
                     <button className="btn btn-primary mx-2" type="button" onClick={handleLogout}>Logout</button>
                 </div>
             </nav>
+            <div className="container elem">
+                <div className="row">
+                    <div className="col">
+                        <h1 style={{ fontWeight: 'bold', textAlign: 'left', marginTop: '40px' }}>Welcome to eMo </h1>
+                    </div>
+                    <div className='d-flex flex-wrap justify-content-around flex-row'>
+                        {loading ? (
+                            <p>Loading...</p>
+                        ) : error ? (
+                            <p>{error}</p>
+                        ) : products.length > 0 ? (
+                            products.map((product, index) => (
+                                <div key={product._id} className="card " style={{ width: '18rem', marginTop: '20px' }} ref={el => productItemsRef.current[index] = el}>
+                                    <img
+                                        src={`data:image/jpeg;base64,${product.imageProduct}`}
+                                        className="card-img-top"
+                                        alt={product.nameProduct}
+                                        style={{ maxHeight: '200px', minHeight: '200px' }}
+                                    />
+                                    <div className="card-body">
+                                        <h5 className="card-title">{product.nameProduct}</h5>
+                                        <p className="card-text">{product.descriptionProduct}</p>
+                                        <p className="card-text">Price: {product.priceProduct}</p>
+                                        <p className="card-text">Stock: {product.stockProduct}</p>
+                                        <p className="card-text">Origin: {product.originProduct}</p>
+                                    </div>
+                                    <button className='button-add-product'>Add to Basket</button>
+                                </div>
+                            ))
+                        ) : (
+                            <p>No products found. Add a product to see it here.</p>
+                        )}
+                    </div>
+                </div>
+            </div>
         </>
     );
 }
